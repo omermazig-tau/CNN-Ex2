@@ -33,7 +33,27 @@ class MLP(Block):
 
         # TODO: Build the MLP architecture as described.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        for i, dim in enumerate(hidden_features):
+            linear_layer = Linear(in_features, dim)
+            blocks.append(linear_layer)
+
+            if activation == 'relu':
+                activation_block = ReLU()
+            elif activation == 'sigmoid':
+                activation_block = Sigmoid()
+            else:
+                raise ValueError('Unrecognized activation function')
+
+            blocks.append(activation_block)
+
+            if dropout > 0:
+                dropout_layer = Dropout(dropout)
+                blocks.append(dropout_layer)
+
+            in_features = dim
+
+        output_layer = Linear(hidden_features[-1], num_classes)
+        blocks.append(output_layer)
         # ========================
 
         self.sequence = Sequential(*blocks)
