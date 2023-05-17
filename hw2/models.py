@@ -149,6 +149,33 @@ class YourCodeNet(ConvClassifier):
     # For example, add batchnorm, dropout, skip connections, change conv
     # filter sizes etc.
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
-    # ========================
+    def _make_feature_extractor(self):
+        cfg = {
+            'VGG11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
+            'VGG13': [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
+            'VGG16': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
+            'VGG19': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512, 'M'],
+        }
+        return self._make_layers(cfg['VGG13'])
 
+    def _make_classifier(self):
+        return nn.Linear(4608, 10)  # 512, 10
+
+    def _make_layers(self, cfg):
+        layers = []
+        in_channels = 3
+
+        for x in cfg:
+            if x == 'M':
+                layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
+            else:
+                conv_layer = nn.Conv2d(in_channels, x, kernel_size=3, padding=1)
+                batchnorm_layer = nn.BatchNorm2d(x)
+                activation_block = nn.ReLU(inplace=True)
+
+                layers.extend([conv_layer, batchnorm_layer, activation_block])
+
+                in_channels = x
+
+        layers.append(nn.AvgPool2d(kernel_size=1, stride=1))
+        return nn.Sequential(*layers)
