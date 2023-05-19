@@ -7,6 +7,7 @@ class Optimizer(abc.ABC):
     """
     Base class for optimizers.
     """
+
     def __init__(self, params):
         """
         :param params: A sequence of model parameters to optimize. Can be a
@@ -91,11 +92,11 @@ class MomentumSGD(Optimizer):
 
         # TODO: Add your own initializations as needed.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        self.v_list = [torch.zeros_like(p) for (p, dp) in params]
         # ========================
 
     def step(self):
-        for p, dp in self.params:
+        for i, (p, dp) in enumerate(self.params):
             if dp is None:
                 continue
 
@@ -103,7 +104,11 @@ class MomentumSGD(Optimizer):
             # update the parameters tensor based on the velocity. Don't forget
             # to include the regularization term.
             # ====== YOUR CODE: ======
-            raise NotImplementedError()
+            regularization = self.reg * p
+            previous_v = self.v_list[i]
+            v = self.momentum * previous_v - self.learn_rate * (dp + regularization)
+            p += v
+            self.v_list[i] = v
             # ========================
 
 

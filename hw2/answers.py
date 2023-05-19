@@ -28,10 +28,12 @@ def part2_optim_hp(opt_name):
     # ====== YOUR CODE: ======
     if opt_name == 'vanilla':
         wstd = 0.1
-        lr = 0.1
+        lr = 0.01
         reg = 0.01
     if opt_name == 'momentum':
-        raise NotImplementedError()
+        wstd = 0.1
+        lr = 0.001
+        reg = 0.001
     if opt_name == 'rmsprop':
         raise NotImplementedError()
     # ========================
