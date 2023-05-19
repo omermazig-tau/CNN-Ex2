@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 from typing import Callable, Any
 from pathlib import Path
 from helpers.train_results import BatchResult, EpochResult, FitResult
+from hw2.blocks import Block
 
 
 class Trainer(abc.ABC):
@@ -72,7 +73,27 @@ class Trainer(abc.ABC):
             # - Optional: Implement early stopping. This is a very useful and
             #   simple regularization technique that is highly recommended.
             # ====== YOUR CODE: ======
-            raise NotImplementedError()
+            epoch_train_loss, epoch_train_acc = self.train_epoch(dl_train)
+            epoch_test_loss, epoch_test_acc = self.test_epoch(dl_test)
+            # Update epochs_without_improvement for early stopping
+            if test_loss and not epoch_test_loss < test_loss[-1]:
+                epochs_without_improvement += 1
+            else:
+                epochs_without_improvement = 0
+
+            if not best_acc or best_acc < epoch_test_acc:
+                best_acc = epoch_test_acc
+                if checkpoints:
+                    torch.save(self.model, checkpoints)
+
+            train_loss.append(epoch_train_loss)
+            test_loss.append(epoch_test_loss)
+            train_acc.append(epoch_train_acc)
+            test_acc.append(epoch_test_acc)
+
+            actual_num_epochs += 1
+            if epochs_without_improvement == early_stopping:
+                break
             # ========================
 
         return FitResult(actual_num_epochs,
@@ -176,7 +197,7 @@ class Trainer(abc.ABC):
 
 
 class BlocksTrainer(Trainer):
-    def __init__(self, model, loss_fn, optimizer):
+    def __init__(self, model: Block, loss_fn, optimizer):
         super().__init__(model, loss_fn, optimizer)
 
     def train_batch(self, batch) -> BatchResult:
@@ -188,7 +209,18 @@ class BlocksTrainer(Trainer):
         # - Optimize params
         # - Calculate number of correct predictions
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        self.optimizer.zero_grad()
+        # - Forward pass
+        batch_output = self.model.forward(X)
+        loss = self.loss_fn.forward(batch_output, y)
+        # - Optimize params
+        dL = self.loss_fn.backward()
+        self.model.backward(dL)
+        self.optimizer.step()
+        # - Calculate number of correct predictions
+        y_hat = torch.argmax(batch_output, dim=1)
+        num_correct = torch.sum(y_hat == y).item()
+
         # ========================
 
         return BatchResult(loss, num_correct)
@@ -200,7 +232,12 @@ class BlocksTrainer(Trainer):
         # - Forward pass
         # - Calculate number of correct predictions
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        # - Forward pass
+        batch_output = self.model.forward(X)
+        loss = self.loss_fn.forward(batch_output, y)
+        # - Calculate number of correct predictions
+        y_hat = torch.argmax(batch_output, dim=1)
+        num_correct = torch.sum(y_hat == y).item()
         # ========================
 
         return BatchResult(loss, num_correct)
