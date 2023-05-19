@@ -7,6 +7,7 @@ class Block(abc.ABC):
     A block is some computation element in a network architecture which
     supports automatic differentiation using forward and backward functions.
     """
+
     def __init__(self):
         # Store intermediate values needed to compute gradients in this hash
         self.grad_cache = {}
@@ -122,9 +123,9 @@ class Linear(Block):
         # ====== YOUR CODE: ======
         dx = torch.mm(dout, self.w)
         # Accumulate the gradient of the loss with respect to w
-        self.dw.addmm_(dout.T, x)  
+        self.dw.addmm_(dout.T, x)
         # Accumulate the gradient of the loss with respect to b
-        self.db.add_(torch.sum(dout, dim=0))  
+        self.db.add_(torch.sum(dout, dim=0))
         # ========================
 
         return dx
@@ -137,6 +138,7 @@ class ReLU(Block):
     """
     Rectified linear unit.
     """
+
     def __init__(self):
         super().__init__()
 
@@ -181,6 +183,7 @@ class Sigmoid(Block):
     """
     Sigmoid activation function.
     """
+
     def __init__(self):
         super().__init__()
 
@@ -301,7 +304,18 @@ class Dropout(Block):
         # previous blocks, this block behaves differently a according to the
         # current mode (train/test).
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        if self.p == 1:
+            raise ValueError("self.p is 1, which means to drop all the neurons, which is wrong")
+
+        if self.training_mode:
+            mask = torch.rand(x.shape) > self.p
+            # scale
+            mask = mask / (1.0 - self.p)
+            out = x * mask
+            self.grad_cache['mask'] = mask
+        else:
+            out = x
+            self.grad_cache['mask'] = None
         # ========================
 
         return out
@@ -309,7 +323,11 @@ class Dropout(Block):
     def backward(self, dout):
         # TODO: Implement the dropout backward pass.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        if self.training_mode:
+            mask = self.grad_cache['mask']
+            dx = mask * dout
+        else:
+            dx = dout
         # ========================
 
         return dx
@@ -325,6 +343,7 @@ class Sequential(Block):
     """
     A Block that passes input through a sequence of other blocks.
     """
+
     def __init__(self, *blocks):
         super().__init__()
         self.blocks = blocks
@@ -382,4 +401,3 @@ class Sequential(Block):
 
     def __getitem__(self, item):
         return self.blocks[item]
-

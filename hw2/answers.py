@@ -47,7 +47,8 @@ def part2_dropout_hp():
     # TODO: Tweak the hyperparameters to get the model to overfit without
     # dropout.
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    wstd = 0.1
+    lr = 0.0001
     # ========================
     return dict(wstd=wstd, lr=lr)
 
@@ -66,16 +67,13 @@ An equation: $e^{i\pi} -1 = 0$
 """
 
 part2_q2 = r"""
-**Your answer:**
+Yes, it is possible, Because the accuracy is summing up discrete values, while the cross entropy loss sums up (with a log transformation) continous values.
 
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
-
+For Example - Say I have 2 samples from 2 possible classes, and look at this two cases:
+    * I predict both sample INCORRECTLY, with a confidence level of p=0.5 for each (guessed wrong both times...). The accuracy is 0, and the loss is -2*log(0.5) ~= 1.4
+    * I predict on sample CORRECTLY and one INCORRECTLY, with a confidence level of p=0.9 for each. The accuracy is 0.5, and the loss is -(log(0.1) + log(0.9)) ~= 2.4
+    
+This is because accuracy represents if I'm right, and cross entropy loss represents how "bad" my error were.
 """
 # ==============
 
