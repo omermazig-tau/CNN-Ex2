@@ -35,7 +35,9 @@ def part2_optim_hp(opt_name):
         lr = 0.001
         reg = 0.001
     if opt_name == 'rmsprop':
-        raise NotImplementedError()
+        wstd = 0.1
+        lr = 0.0001
+        reg = 0.0001
     # ========================
     return dict(wstd=wstd, lr=lr, reg=reg)
 

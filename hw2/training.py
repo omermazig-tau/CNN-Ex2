@@ -3,9 +3,10 @@ import os
 import sys
 import tqdm
 import torch
+from torch import Tensor
 
 from torch.utils.data import DataLoader
-from typing import Callable, Any
+from typing import Callable, Any, List
 from pathlib import Path
 from helpers.train_results import BatchResult, EpochResult, FitResult
 from hw2.blocks import Block
@@ -19,6 +20,7 @@ class Trainer(abc.ABC):
     - Single epoch (train_epoch/test_epoch)
     - Single batch (train_batch/test_batch)
     """
+
     def __init__(self, model, loss_fn, optimizer, device=None):
         """
         Initialize the trainer.
@@ -53,6 +55,10 @@ class Trainer(abc.ABC):
         :param print_every: Print progress every this number of epochs.
         :return: A FitResult object containing train and test losses per epoch.
         """
+
+        def average(l: List[Tensor]) -> float:
+            return (sum(l) / len(l)).item()
+
         actual_num_epochs = 0
         train_loss, train_acc, test_loss, test_acc = [], [], [], []
 
@@ -61,9 +67,9 @@ class Trainer(abc.ABC):
 
         for epoch in range(num_epochs):
             verbose = False  # pass this to train/test_epoch.
-            if epoch % print_every == 0 or epoch == num_epochs-1:
+            if epoch % print_every == 0 or epoch == num_epochs - 1:
                 verbose = True
-            self._print(f'--- EPOCH {epoch+1}/{num_epochs} ---', verbose)
+            self._print(f'--- EPOCH {epoch + 1}/{num_epochs} ---', verbose)
 
             # TODO: Train & evaluate for one epoch
             # - Use the train/test_epoch methods.
@@ -73,10 +79,12 @@ class Trainer(abc.ABC):
             # - Optional: Implement early stopping. This is a very useful and
             #   simple regularization technique that is highly recommended.
             # ====== YOUR CODE: ======
-            epoch_train_loss, epoch_train_acc = self.train_epoch(dl_train)
-            epoch_test_loss, epoch_test_acc = self.test_epoch(dl_test)
+            epoch_train_losses, epoch_train_acc = self.train_epoch(dl_train)
+            epoch_test_losses, epoch_test_acc = self.test_epoch(dl_test)
             # Update epochs_without_improvement for early stopping
-            if test_loss and not epoch_test_loss < test_loss[-1]:
+            average_train_losses = average(epoch_train_losses)
+            average_test_losses = average(epoch_test_losses)
+            if test_loss and not average_test_losses < test_loss[-1]:
                 epochs_without_improvement += 1
             else:
                 epochs_without_improvement = 0
@@ -86,8 +94,8 @@ class Trainer(abc.ABC):
                 if checkpoints:
                     torch.save(self.model, checkpoints)
 
-            train_loss.append(epoch_train_loss)
-            test_loss.append(epoch_test_loss)
+            train_loss.append(average_train_losses)
+            test_loss.append(average_test_losses)
             train_acc.append(epoch_train_acc)
             test_acc.append(epoch_test_acc)
 
