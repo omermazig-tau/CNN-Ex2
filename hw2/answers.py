@@ -29,15 +29,15 @@ def part2_optim_hp(opt_name):
     if opt_name == 'vanilla':
         wstd = 0.1
         lr = 0.01
-        reg = 0.01
+        reg = 0.001
     if opt_name == 'momentum':
         wstd = 0.1
-        lr = 0.001
+        lr = 0.01
         reg = 0.001
     if opt_name == 'rmsprop':
         wstd = 0.1
         lr = 0.0001
-        reg = 0.0001
+        reg = 0.001
     # ========================
     return dict(wstd=wstd, lr=lr, reg=reg)
 
