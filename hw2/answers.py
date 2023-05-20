@@ -54,16 +54,13 @@ def part2_dropout_hp():
 
 
 part2_q1 = r"""
-**Your answer:**
+My expectation for the train accuracy was to see it drop lower for higher dropout values - Since 
+the model has less information in the training part, and can't over-fit the training data.
+My expectation for the test accuracy however was to see the best accuracy for dropout=0.4 - Because
+when dropout=0 the model over-fits, and when dropout=0.8 the model under-fits (not learning enough 
+since it losses 80% of neurons for each layer). 
 
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
-
+That expectation was met by the results of the graph.
 """
 
 part2_q2 = r"""
