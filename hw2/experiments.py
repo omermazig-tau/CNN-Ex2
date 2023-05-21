@@ -56,7 +56,27 @@ def run_experiment(run_name, out_dir='./results', seed=None,
     #  for you automatically.
     fit_res = None
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    BATCH_SIZE_TRAIN = 128
+    BATCH_SIZE_TEST = 64
+    in_size = ds_train[0][0].shape
+    num_classes = len(ds_train.classes)
+    checkpoints = f'checkpoints/{run_name}.pt'
+
+    filters = [i for i in filters_per_layer for _ in range(layers_per_block)]
+
+    # Create model
+    model = model_cls(in_size, num_classes, filters=filters, pool_every=pool_every, hidden_dims=hidden_dims)
+    model = torch.nn.DataParallel(model)
+
+    loss_fn = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.RMSprop(model.parameters(), lr=lr, weight_decay=reg)
+
+    # Create data loaders
+    dl_train = torch.utils.data.DataLoader(ds_train, BATCH_SIZE_TRAIN, shuffle=True, num_workers=2)
+    dl_test = torch.utils.data.DataLoader(ds_test, BATCH_SIZE_TEST, shuffle=True, num_workers=2)
+
+    trainer = training.TorchTrainer(model, loss_fn, optimizer, device)
+    fit_res = trainer.fit(dl_train, dl_test, epochs, checkpoints=checkpoints, early_stopping=early_stopping, **kw)
     # ========================
 
     save_experiment(run_name, out_dir, cfg, fit_res)
