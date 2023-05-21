@@ -79,29 +79,22 @@ class Trainer(abc.ABC):
             # - Optional: Implement early stopping. This is a very useful and
             #   simple regularization technique that is highly recommended.
             # ====== YOUR CODE: ======
-            epoch_train_losses, epoch_train_acc = self.train_epoch(dl_train, **kw)
-            epoch_test_losses, epoch_test_acc = self.test_epoch(dl_test, **kw)
-            # Update epochs_without_improvement for early stopping
-            average_train_losses = average(epoch_train_losses)
-            average_test_losses = average(epoch_test_losses)
-            if test_loss and not average_test_losses < test_loss[-1]:
-                epochs_without_improvement += 1
-            else:
+            train_epoch_result = self.train_epoch(dl_train, verbose=verbose, **kw)
+            test_epoch_result = self.test_epoch(dl_test, verbose=verbose, **kw)
+
+            train_loss.append(torch.mean(torch.Tensor(train_epoch_result.losses)).item())
+            test_loss.append(torch.mean(torch.Tensor(test_epoch_result.losses)).item())
+            train_acc.append(train_epoch_result.accuracy)
+            test_acc.append(test_epoch_result.accuracy)
+
+            if not best_acc or test_acc[-1] > best_acc:
+                best_acc = test_acc[-1]
                 epochs_without_improvement = 0
-
-            if not best_acc or best_acc < epoch_test_acc:
-                best_acc = epoch_test_acc
-                if checkpoints:
-                    torch.save(self.model, checkpoints)
-
-            train_loss.append(average_train_losses)
-            test_loss.append(average_test_losses)
-            train_acc.append(epoch_train_acc)
-            test_acc.append(epoch_test_acc)
-
-            actual_num_epochs += 1
-            if epochs_without_improvement == early_stopping:
-                break
+            else:
+                epochs_without_improvement += 1
+                if early_stopping and epochs_without_improvement == early_stopping:
+                    print(f"Early stopping after {epochs_without_improvement} epochs without improvement (best accuracy: {best_acc})")
+                    break
             # ========================
 
         return FitResult(actual_num_epochs,
@@ -267,7 +260,20 @@ class TorchTrainer(Trainer):
         # - Optimize params
         # - Calculate number of correct predictions
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        self.model: torch.nn.Module
+        self.loss_fn: torch.nn.modules.loss._Loss
+        self.optimizer: torch.optim.Optimizer
+        self.device: torch.device
+        self.optimizer.zero_grad()
+        
+        outputs = self.model(X)
+        loss = self.loss_fn(outputs, y)
+        loss.backward()
+        self.optimizer.step()
+
+        loss = loss.item()
+        predictions = outputs.argmax(dim=1)
+        num_correct = (predictions == y).sum().item()
         # ========================
 
         return BatchResult(loss, num_correct)
@@ -283,7 +289,10 @@ class TorchTrainer(Trainer):
             # - Forward pass
             # - Calculate number of correct predictions
             # ====== YOUR CODE: ======
-            raise NotImplementedError()
+            outputs = self.model(X)
+            loss = self.loss_fn(outputs, y).item()
+            predictions = outputs.argmax(dim=1)
+            num_correct = (predictions == y).sum().item()
             # ========================
 
         return BatchResult(loss, num_correct)
