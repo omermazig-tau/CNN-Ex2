@@ -33,27 +33,22 @@ class MLP(Block):
 
         # TODO: Build the MLP architecture as described.
         # ====== YOUR CODE: ======
-        for i, dim in enumerate(hidden_features):
-            linear_layer = Linear(in_features, dim)
-            blocks.append(linear_layer)
+        for i, hidden_feature in enumerate(hidden_features):
+            if i == 0:
+                blocks.append(Linear(in_features, hidden_feature))
+            else:
+                blocks.append(Linear(hidden_features[i-1], hidden_feature))
 
             if activation == 'relu':
-                activation_block = ReLU()
+                blocks.append(ReLU())
             elif activation == 'sigmoid':
-                activation_block = Sigmoid()
-            else:
-                raise ValueError('Unrecognized activation function')
-
-            blocks.append(activation_block)
+                blocks.append(Sigmoid())
 
             if dropout > 0:
-                dropout_layer = Dropout(dropout)
-                blocks.append(dropout_layer)
+                blocks.append(Dropout(dropout))
 
-            in_features = dim
-
-        output_layer = Linear(hidden_features[-1], num_classes)
-        blocks.append(output_layer)
+        blocks.append(Linear(hidden_features[-1], num_classes))
+                    
         # ========================
 
         self.sequence = Sequential(*blocks)
@@ -101,17 +96,25 @@ class ConvClassifier(nn.Module):
         self.feature_extractor = self._make_feature_extractor()
         self.classifier = self._make_classifier()
 
+        
     def _make_feature_extractor(self):
         in_channels, in_h, in_w, = tuple(self.in_size)
-
+        self.h = in_h
+        self.w = in_w
+        
         layers = []
         # TODO: Create the feature extractor part of the model:
         # [(Conv -> ReLU)*P -> MaxPool]*(N/P)
         # Use only dimension-preserving 3x3 convolutions. Apply 2x2 Max
         # Pooling to reduce dimensions.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        filters = [in_channels] + self.filters
 
+        for i, (in_channels, out_channels) in enumerate(zip(filters, filters[1:])):
+            layers.append(nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)) 
+            layers.append(nn.ReLU())
+            if i > 0 and (i + 1) % self.pool_every == 0 or i == len(filters) - 2:
+                layers.append(nn.MaxPool2d(kernel_size=2))
         # ========================
         seq = nn.Sequential(*layers)
         return seq
@@ -125,7 +128,34 @@ class ConvClassifier(nn.Module):
         # You'll need to calculate the number of features first.
         # The last Linear layer should have an output dimension of out_classes.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        N = len(self.filters)
+        P = self.pool_every
+        c, h, w = self.in_size
+        conv2d_dilation, conv2d_padding, conv2d_stride = 1, 1, 1
+        maxpool2d_kernel_size, maxpool2d_dilation, maxpool2d_padding = 2, 1, 0
+        maxpool2d_stride = maxpool2d_kernel_size
+
+        filters = [in_channels] + self.filters
+
+        for i, (in_channels, out_channels) in enumerate(zip(filters, filters[1:])):
+            kernel_size = 3
+            h, w = [(x + 2 * conv2d_padding - conv2d_dilation * (kernel_size - 1) - 1) // conv2d_stride + 1 for x in (h, w)]
+            c = out_channels
+
+            if i > 0 and i % P == P - 1 or i == len(filters) - 2:
+                h, w = [(x + 2 * maxpool2d_padding - maxpool2d_dilation * (maxpool2d_kernel_size - 1) - 1) // maxpool2d_stride + 1
+                        for x in (h, w)]
+                c = out_channels
+
+        in_features = c * h * w
+
+        hidden_dims = [in_features] + self.hidden_dims
+
+        for in_feat, out_feat in zip(hidden_dims, hidden_dims[1:]):
+            layers.append(nn.Linear(in_feat, out_feat))
+            layers.append(nn.ReLU())
+
+        layers.append(nn.Linear(self.hidden_dims[-1], self.out_classes))
         # ========================
         seq = nn.Sequential(*layers)
         return seq
@@ -135,10 +165,13 @@ class ConvClassifier(nn.Module):
         # Extract features from the input, run the classifier on them and
         # return class scores.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        x = self.feature_extractor(x)
+        x = x.view(x.shape[0], -1)
+        out = self.classifier(x)
+    
         # ========================
         return out
-
+    
 
 class YourCodeNet(ConvClassifier):
     def __init__(self, in_size, out_classes, filters, pool_every, hidden_dims):
@@ -159,7 +192,7 @@ class YourCodeNet(ConvClassifier):
         return self._make_layers(cfg['VGG13'])
 
     def _make_classifier(self):
-        return nn.Linear(4608, 10)  # 512, 10
+        return nn.Linear(4608, 10) 
 
     def _make_layers(self, cfg):
         layers = []
@@ -179,3 +212,5 @@ class YourCodeNet(ConvClassifier):
 
         layers.append(nn.AvgPool2d(kernel_size=1, stride=1))
         return nn.Sequential(*layers)
+    # ========================
+
