@@ -78,54 +78,42 @@ This is because accuracy represents if I'm right, and cross entropy loss represe
 # Part 3 answers
 
 part3_q1 = r"""
-**Your answer:**
 
+The experimental results indicate that increasing the depth of the network leads to a decrease in model accuracy. Notably, the best performance was achieved with a network depth of 4. However, we encountered challenges when attempting to train a network with a depth of 16 due to the presence of MaxPooling layers, which caused significant dimensionality reduction.
 
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+To address this issue, a possible solution would be to reduce the network depth or limit the usage of MaxPooling layers. This approach aims to mitigate the impact of dimensionality reduction and improve the network's training capabilities.
 
 """
 
 part3_q2 = r"""
-**Your answer:**
+<!--# Analyze your results from experiment 1.2. In particular, compare to the results of experiment 1.1. -->
 
+We explored the impact of varying the number of convolutional layers ($L$) on our model's complexity, considering $L$ as 2, 4, and 8.
 
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+As the number of convolutional layers increased, the train accuracy also increased. This effect is particularly pronounced in the case of $L=8$.
+It is important to note that such high accuracy levels can be attributed to overfitting on the training data.
 
+We explored the influence of varying $K$ (the number of filters) on the model's behavior. We observed that as $K$ increased, the onset of overfitting occurred earlier. This observation is evident in the train loss graph, where a significant drop in the train loss is observed. However, these values performed better than others until overfitting began.
+
+We saw that adding more convolutional layers and increasing the number of filters can improve model accuracy up to a certain point. However, we need to be careful about overfitting as we continue to increase these parameters.
 """
 
 part3_q3 = r"""
-**Your answer:**
+<!-- # Analyze your results from experiment 1.3. -->
 
+As we examine the impact of increasing the value of $L$ on our model, we observe an improvement in performance. The test accuracy graph demonstrates that when $L=4$, we achieve the best results.
+Furthermore, an interesting observation is that as we increase the value of $L$, we notice a delay in the onset of overfitting, leading to better overall results. This suggests that a higher value of $L$ allows the model to generalize better to unseen data.
 
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
-
+In summary, increasing the value of $L$ with varying numbers of convolutional layers proves beneficial for our model's performance. The test accuracy and delayed overfitting indicate the advantages of employing a higher value of $L$ in our network.
 """
 
 
 part3_q4 = r"""
-**Your answer:**
+<!-- Explain your modifications to the architecture which you implemented in the YourCodeNet class. -->
+<!-- Analyze the results of experiment 2. Compare to experiment 1. -->
 
+Through our experiments, we have achieved great results with VGG13 model, surpassing expectations associated with such a renowned architecture. Specifically, we have achieved a test accuracy of over 80%, demonstrating the effectiveness and robustness of our approach. These results highlight the capability of the VGG13-based model to excel in various tasks and validate its reputation as a powerful and reliable architecture in the field of deep learning.
 
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+The implementation used model VGG13, deep convolutional neural network known for its strong performance.
 
 """
